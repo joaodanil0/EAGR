@@ -1,0 +1,18 @@
+# Folder
+
+out/
+results/
+.computed/
+.settings/
+
+General.anf
+GreedyForward
+GreedyForward_dbg
+Makefile
+.cmdenv-log
+.cproject
+.nedexclusions
+.nedfolders
+.oppbuildspec
+.project
+.qtenvrc
