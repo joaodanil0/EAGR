@@ -15,5 +15,52 @@
 
 package src;
 
+import inet.physicallayer.unitdisk.UnitDiskRadioMedium;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.visualizer.integrated.IntegratedCanvasVisualizer;
+import src.nodes.Sink;
+import src.nodes.Sensor;
+
 network EAGR {
+    
+      parameters:
+        int numHosts;
+        double density;
+
+        double area = numHosts/density;
+        double side = sqrt(area);
+
+        @display("bgb=$side,$side;bgi=background/terrain");
+
+    submodules:
+
+        visualizer: IntegratedCanvasVisualizer {
+            @display("p=580,125");
+        }
+
+        radioMedium: UnitDiskRadioMedium {
+            @display("p=580,275");
+        }
+
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=580,200");
+        }
+
+        sink: Sink {
+            parameters:
+                *.initialX = (side/2)*1m;
+                *.initialY = (side/2)*1m;
+                @display("p=149,94");
+        }
+        
+        sensor[numHosts]: Sensor {
+            
+            parameters:
+				*.numHosts = numHosts;
+				*.constraintAreaMaxX = side*1m;
+				*.constraintAreaMaxY = side*1m;
+				*.constraintAreaMinX = 0;
+				*.constraintAreaMinY = 0;
+            	@display("p=87.02667,155.34666");
+        }
 }
