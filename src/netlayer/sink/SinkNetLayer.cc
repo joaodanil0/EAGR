@@ -45,7 +45,7 @@ void SinkNetLayer::handleSelfMessage(cMessage *msg){
         pkt->setSrcAddr(myNetwAddr);
         pkt->setDestAddr(myNetwAddr.getAddressType()->getBroadcastAddress());
 
-        pkt->setSinkPosition(mobility->getCurrentPosition());
+        pkt->setDestPosition(mobility->getCurrentPosition());
         pkt->setNodeEnergy(-1);
         pkt->setNodePosition(mobility->getCurrentPosition());
 

@@ -234,7 +234,7 @@ void RoutingMessage::copy(const RoutingMessage& other)
 {
     this->srcAddr = other.srcAddr;
     this->destAddr = other.destAddr;
-    this->sinkPosition = other.sinkPosition;
+    this->destPosition = other.destPosition;
     this->nodePosition = other.nodePosition;
     this->nodeEnergy = other.nodeEnergy;
 }
@@ -244,7 +244,7 @@ void RoutingMessage::parsimPack(omnetpp::cCommBuffer *b) const
     ::inet::FieldsChunk::parsimPack(b);
     doParsimPacking(b,this->srcAddr);
     doParsimPacking(b,this->destAddr);
-    doParsimPacking(b,this->sinkPosition);
+    doParsimPacking(b,this->destPosition);
     doParsimPacking(b,this->nodePosition);
     doParsimPacking(b,this->nodeEnergy);
 }
@@ -254,7 +254,7 @@ void RoutingMessage::parsimUnpack(omnetpp::cCommBuffer *b)
     ::inet::FieldsChunk::parsimUnpack(b);
     doParsimUnpacking(b,this->srcAddr);
     doParsimUnpacking(b,this->destAddr);
-    doParsimUnpacking(b,this->sinkPosition);
+    doParsimUnpacking(b,this->destPosition);
     doParsimUnpacking(b,this->nodePosition);
     doParsimUnpacking(b,this->nodeEnergy);
 }
@@ -281,15 +281,15 @@ void RoutingMessage::setDestAddr(const L3Address& destAddr)
     this->destAddr = destAddr;
 }
 
-const Coord& RoutingMessage::getSinkPosition() const
+const Coord& RoutingMessage::getDestPosition() const
 {
-    return this->sinkPosition;
+    return this->destPosition;
 }
 
-void RoutingMessage::setSinkPosition(const Coord& sinkPosition)
+void RoutingMessage::setDestPosition(const Coord& destPosition)
 {
     handleChange();
-    this->sinkPosition = sinkPosition;
+    this->destPosition = destPosition;
 }
 
 const Coord& RoutingMessage::getNodePosition() const
@@ -321,7 +321,7 @@ class RoutingMessageDescriptor : public omnetpp::cClassDescriptor
     enum FieldConstants {
         FIELD_srcAddr,
         FIELD_destAddr,
-        FIELD_sinkPosition,
+        FIELD_destPosition,
         FIELD_nodePosition,
         FIELD_nodeEnergy,
     };
@@ -400,7 +400,7 @@ unsigned int RoutingMessageDescriptor::getFieldTypeFlags(int field) const
     static unsigned int fieldTypeFlags[] = {
         0,    // FIELD_srcAddr
         0,    // FIELD_destAddr
-        FD_ISCOMPOUND,    // FIELD_sinkPosition
+        FD_ISCOMPOUND,    // FIELD_destPosition
         FD_ISCOMPOUND,    // FIELD_nodePosition
         FD_ISEDITABLE,    // FIELD_nodeEnergy
     };
@@ -418,7 +418,7 @@ const char *RoutingMessageDescriptor::getFieldName(int field) const
     static const char *fieldNames[] = {
         "srcAddr",
         "destAddr",
-        "sinkPosition",
+        "destPosition",
         "nodePosition",
         "nodeEnergy",
     };
@@ -431,7 +431,7 @@ int RoutingMessageDescriptor::findField(const char *fieldName) const
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0] == 's' && strcmp(fieldName, "srcAddr") == 0) return base+0;
     if (fieldName[0] == 'd' && strcmp(fieldName, "destAddr") == 0) return base+1;
-    if (fieldName[0] == 's' && strcmp(fieldName, "sinkPosition") == 0) return base+2;
+    if (fieldName[0] == 'd' && strcmp(fieldName, "destPosition") == 0) return base+2;
     if (fieldName[0] == 'n' && strcmp(fieldName, "nodePosition") == 0) return base+3;
     if (fieldName[0] == 'n' && strcmp(fieldName, "nodeEnergy") == 0) return base+4;
     return basedesc ? basedesc->findField(fieldName) : -1;
@@ -448,7 +448,7 @@ const char *RoutingMessageDescriptor::getFieldTypeString(int field) const
     static const char *fieldTypeStrings[] = {
         "inet::L3Address",    // FIELD_srcAddr
         "inet::L3Address",    // FIELD_destAddr
-        "inet::Coord",    // FIELD_sinkPosition
+        "inet::Coord",    // FIELD_destPosition
         "inet::Coord",    // FIELD_nodePosition
         "double",    // FIELD_nodeEnergy
     };
@@ -521,7 +521,7 @@ std::string RoutingMessageDescriptor::getFieldValueAsString(void *object, int fi
     switch (field) {
         case FIELD_srcAddr: return pp->getSrcAddr().str();
         case FIELD_destAddr: return pp->getDestAddr().str();
-        case FIELD_sinkPosition: {std::stringstream out; out << pp->getSinkPosition(); return out.str();}
+        case FIELD_destPosition: {std::stringstream out; out << pp->getDestPosition(); return out.str();}
         case FIELD_nodePosition: {std::stringstream out; out << pp->getNodePosition(); return out.str();}
         case FIELD_nodeEnergy: return double2string(pp->getNodeEnergy());
         default: return "";
@@ -552,7 +552,7 @@ const char *RoutingMessageDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
-        case FIELD_sinkPosition: return omnetpp::opp_typename(typeid(Coord));
+        case FIELD_destPosition: return omnetpp::opp_typename(typeid(Coord));
         case FIELD_nodePosition: return omnetpp::opp_typename(typeid(Coord));
         default: return nullptr;
     };
@@ -570,7 +570,7 @@ void *RoutingMessageDescriptor::getFieldStructValuePointer(void *object, int fie
     switch (field) {
         case FIELD_srcAddr: return toVoidPtr(&pp->getSrcAddr()); break;
         case FIELD_destAddr: return toVoidPtr(&pp->getDestAddr()); break;
-        case FIELD_sinkPosition: return toVoidPtr(&pp->getSinkPosition()); break;
+        case FIELD_destPosition: return toVoidPtr(&pp->getDestPosition()); break;
         case FIELD_nodePosition: return toVoidPtr(&pp->getNodePosition()); break;
         default: return nullptr;
     }

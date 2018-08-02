@@ -41,7 +41,7 @@ namespace inet {
  *     L3Address srcAddr;
  *     L3Address destAddr;
  * 
- *     Coord sinkPosition;
+ *     Coord destPosition;
  * 
  *     Coord nodePosition;
  *     double nodeEnergy;
@@ -53,7 +53,7 @@ class RoutingMessage : public ::inet::FieldsChunk
   protected:
     L3Address srcAddr;
     L3Address destAddr;
-    Coord sinkPosition;
+    Coord destPosition;
     Coord nodePosition;
     double nodeEnergy = 0;
 
@@ -80,9 +80,9 @@ class RoutingMessage : public ::inet::FieldsChunk
     virtual const L3Address& getDestAddr() const;
     virtual L3Address& getDestAddrForUpdate() { handleChange();return const_cast<L3Address&>(const_cast<RoutingMessage*>(this)->getDestAddr());}
     virtual void setDestAddr(const L3Address& destAddr);
-    virtual const Coord& getSinkPosition() const;
-    virtual Coord& getSinkPositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getSinkPosition());}
-    virtual void setSinkPosition(const Coord& sinkPosition);
+    virtual const Coord& getDestPosition() const;
+    virtual Coord& getDestPositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getDestPosition());}
+    virtual void setDestPosition(const Coord& destPosition);
     virtual const Coord& getNodePosition() const;
     virtual Coord& getNodePositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getNodePosition());}
     virtual void setNodePosition(const Coord& nodePosition);

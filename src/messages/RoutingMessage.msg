@@ -31,7 +31,7 @@ class RoutingMessage extends FieldsChunk {
     L3Address srcAddr;
     L3Address destAddr;
     
-	Coord sinkPosition;
+	Coord destPosition;
 	
 	Coord nodePosition;
 	double nodeEnergy;

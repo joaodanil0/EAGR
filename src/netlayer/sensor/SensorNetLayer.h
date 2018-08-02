@@ -46,8 +46,8 @@ class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
 private:
     SensorNetLayer(const SensorNetLayer&);
     SensorNetLayer& operator=(const SensorNetLayer&);
-    typedef map<L3Address, double> neighborsTable_t;
-    void neighbors(L3Address address, double sinkDistance);
+    typedef map<Coord, double> neighborsTable_t;
+    void neighbors(Coord position, double energy);
     L3Address getDest();
 protected:
 
@@ -65,7 +65,8 @@ private:
     IMobility *mobility;
     int headerLength = 0;
     cMessage *routingMessage;
-    Coord sinkPosition;
+    Coord destPosition;
+
     L3Address myNetworkAddress;
     L3Address sinkAddress;
     MacAddress myMacAddress;

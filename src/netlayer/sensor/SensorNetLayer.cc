@@ -41,7 +41,7 @@ void SensorNetLayer::handleSelfMessage(cMessage *msg){
         auto pkt = makeShared<RoutingMessage>();
 
         pkt->setChunkLength(B(headerLength));
-        pkt->setSinkPosition(sinkPosition);
+        pkt->setDestPosition(destPosition);
         //pkt->setSinkAddress(sinkAddress);
         pkt->setSrcAddr(myNetworkAddress);
         //pkt->setSinkDistance(sinkDistance);
@@ -64,7 +64,7 @@ void SensorNetLayer::handleLowerPacket(Packet *packet){
         if(!isConfigured){
             isConfigured = true;
 
-            sinkPosition = netMsg->getSinkPosition();
+            destPosition = netMsg->getDestPosition();
 
 
             routingMessage = new cMessage("Forward Flooding", ROUTING);
@@ -125,11 +125,11 @@ void SensorNetLayer::handleUpperPacket(Packet *msg){
     //delete msg;
 }
 
-void SensorNetLayer::neighbors(L3Address address, double sinkDistance){
+void SensorNetLayer::neighbors(Coord position, double energy){
 
-    if(sinkDistance <= this->sinkDistance){
-        neighborsTable.insert(make_pair(address, sinkDistance));
-    }
+
+    neighborsTable.insert(make_pair(position, energy));
+
 }
 
 void SensorNetLayer::setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr){
