@@ -42,9 +42,10 @@ void SensorNetLayer::handleSelfMessage(cMessage *msg){
 
         pkt->setChunkLength(B(headerLength));
         pkt->setDestPosition(destPosition);
-        //pkt->setSinkAddress(sinkAddress);
+        pkt->setNodePosition(mobility->getCurrentPosition());
+        pkt->setNodeEnergy(energyStorage->getResidualEnergyCapacity().get());
+
         pkt->setSrcAddr(myNetworkAddress);
-        //pkt->setSinkDistance(sinkDistance);
         pkt->setDestAddr(myNetworkAddress.getAddressType()->getBroadcastAddress());
 
         auto packet = new Packet("Forward Flooding", ROUTING);
@@ -53,6 +54,33 @@ void SensorNetLayer::handleSelfMessage(cMessage *msg){
         sendDown(packet);
 
     }
+    else if(msg->getKind() == DATA){
+
+        auto pkt = makeShared<RoutingMessage>();
+
+        L3Address neighborsAddr = getDest();
+        //MacAddress neighborsMACAddr = arp->resolveL3Address(neighborsAddr, nullptr);
+
+        pkt->setChunkLength(B(headerLength));
+        pkt->setDestPosition(destPosition);
+        pkt->setNodeEnergy(energyStorage->getResidualEnergyCapacity().get());
+        pkt->setDestAddr(neighborsAddr);
+
+
+        dataMsg->insertAtFront(pkt);
+        dataMsg->setKind(DATAFORWARD);
+        setDownControlInfo(dataMsg, MacAddress::BROADCAST_ADDRESS);
+        sendDown(dataMsg);
+
+
+    }
+    else if(msg->getKind() == DATAFORWARD){
+
+        auto pkt = makeShared<RoutingMessage>();
+
+        L3Address neighborsAddr = getDest();
+    }
+
     delete msg;
 }
 
@@ -60,43 +88,51 @@ void SensorNetLayer::handleLowerPacket(Packet *packet){
 
     if(packet->getKind() == ROUTING){
         auto netMsg = staticPtrCast<RoutingMessage>(packet->peekAtFront<RoutingMessage>()->dupShared());
+        neighborsData_t neighborsData;
 
         if(!isConfigured){
             isConfigured = true;
 
             destPosition = netMsg->getDestPosition();
 
-
-            routingMessage = new cMessage("Forward Flooding", ROUTING);
-            scheduleAt(simTime() + truncnormal(0,0.1), routingMessage);
+            message = new cMessage("Forward Flooding", ROUTING);
+            scheduleAt(simTime() + truncnormal(0,0.1), message);
         }
 
-        neighbors(netMsg->getNodePosition(), netMsg->getNodeEnergy());
+        neighborsData.energy = netMsg->getNodeEnergy();
+        neighborsData.destinationDistance = netMsg->getNodePosition().distance(destPosition);
+
+        neighborsTable.insert(make_pair(netMsg->getSrcAddr(), neighborsData));
 
         delete packet;
     }
-    else if(packet->getKind() == DATA){
+    else if(packet->getKind() == DATAFORWARD){
 
-        auto netMsg = staticPtrCast<RoutingMessage>(packet->peekAtFront<RoutingMessage>()->dupShared());
+        message = new cMessage("Send Data", DATAFORWARD);
+        scheduleAt(simTime() + truncnormal(0,0.1), message);
 
-        L3Address neighborsAddr = getDest();
-        MacAddress neighborsMacAddr = arp->resolveL3Address(neighborsAddr, nullptr);
-        const cObject* pCtrlInfo = nullptr;
+        dataMsg = packet;
 
-
-        netMsg->setDestAddr(neighborsAddr);
-
-        pCtrlInfo = packet->removeControlInfo();
-
-        auto p = new Packet(packet->getName(), packet->getKind());
-        packet->popAtFront<RoutingMessage>();
-        p->insertAtBack(packet->peekDataAt(b(0), packet->getDataLength()));
-        p->insertAtFront(netMsg);
-        setDownControlInfo(p, neighborsMacAddr);
-        sendDown(p);
-
-        cout << energyStorage->getResidualEnergyCapacity().get() << endl;
-
+//        auto netMsg = staticPtrCast<RoutingMessage>(packet->peekAtFront<RoutingMessage>()->dupShared());
+//
+//        Coord neighborsAddr = getDest();
+//        MacAddress neighborsMacAddr = arp->resolveL3Address(neighborsAddr, nullptr);
+//        const cObject* pCtrlInfo = nullptr;
+//
+//
+//        netMsg->setDestAddr(neighborsAddr);
+//
+//        pCtrlInfo = packet->removeControlInfo();
+//
+//        auto p = new Packet(packet->getName(), packet->getKind());
+//        packet->popAtFront<RoutingMessage>();
+//        p->insertAtBack(packet->peekDataAt(b(0), packet->getDataLength()));
+//        p->insertAtFront(netMsg);
+//        setDownControlInfo(p, neighborsMacAddr);
+//        sendDown(p);
+//
+//        cout << energyStorage->getResidualEnergyCapacity().get() << endl;
+//
         delete packet;
     }
 
@@ -105,31 +141,10 @@ void SensorNetLayer::handleLowerPacket(Packet *packet){
 
 void SensorNetLayer::handleUpperPacket(Packet *msg){
 
-    auto pkt = makeShared<RoutingMessage>();
+    message = new cMessage("Send Data", DATA);
+    scheduleAt(simTime() + truncnormal(0,0.1), message);
 
-    L3Address neighborsAddr = getDest();
-    MacAddress neighborsMACAddr = arp->resolveL3Address(neighborsAddr, nullptr);
-
-    pkt->setChunkLength(B(headerLength));
-    pkt->setSrcAddr(myNetworkAddress);
-    pkt->setDestAddr(neighborsAddr);
-
-    msg->insertAtFront(pkt);
-    msg->setKind(DATA);
-
-    setDownControlInfo(msg, neighborsMACAddr);
-
-    sendDown(msg);
-
-
-    //delete msg;
-}
-
-void SensorNetLayer::neighbors(Coord position, double energy){
-
-
-    neighborsTable.insert(make_pair(position, energy));
-
+    dataMsg = msg;
 }
 
 void SensorNetLayer::setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr){
@@ -147,10 +162,19 @@ const Protocol& SensorNetLayer::getProtocol() const {
 
 L3Address SensorNetLayer::getDest(){
 
-    typedef function<bool(pair<L3Address, double>, pair<L3Address, double>)> Comparator;
+    double energyThreshold = 0.5;
+    double auxDistance = 99999999;
+    double auxEnergy = 0;
+    L3Address addr;
 
-    Comparator compFunctor = [](pair<L3Address, double> elem1 ,pair<L3Address, double> elem2) {return elem1.second < elem2.second; };
-    set<pair<L3Address, double>, Comparator> setOfWords(neighborsTable.begin(), neighborsTable.end(), compFunctor);
-    for (pair<L3Address, double> element : setOfWords)
-       return element.first;
+    for(auto neighbor : neighborsTable) {
+
+        if((neighbor.second.destinationDistance < auxDistance) && (neighbor.second.energy > auxEnergy) && (neighbor.second.energy > energyThreshold)){
+            auxDistance = neighbor.second.destinationDistance;
+            auxEnergy = neighbor.second.energy;
+            addr = neighbor.first;
+        }
+    }
+
+    return addr;
 }

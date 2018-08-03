@@ -41,48 +41,58 @@ using std::pair;
 using std::set;
 using std::cout;
 
+
+typedef struct {
+
+        double energy;
+        double destinationDistance;
+
+}neighborsData_t;
+
 class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
 
-private:
-    SensorNetLayer(const SensorNetLayer&);
-    SensorNetLayer& operator=(const SensorNetLayer&);
-    typedef map<Coord, double> neighborsTable_t;
-    void neighbors(Coord position, double energy);
-    L3Address getDest();
-protected:
+    private:
+        SensorNetLayer(const SensorNetLayer&);
+        SensorNetLayer& operator=(const SensorNetLayer&);
+        typedef map<L3Address, neighborsData_t> neighborsTable_t;
+        L3Address getDest();
+    protected:
 
-public:
-    SensorNetLayer() {}
-    virtual void initialize(int stage) override;
-    virtual void handleSelfMessage(cMessage *msg) override;
-    virtual void handleLowerPacket(Packet *packet) override;
-    virtual void handleUpperPacket(Packet *msg) override;
-    const Protocol& getProtocol() const override;
-    virtual void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
+    public:
+        SensorNetLayer() {}
+        virtual void initialize(int stage) override;
+        virtual void handleSelfMessage(cMessage *msg) override;
+        virtual void handleLowerPacket(Packet *packet) override;
+        virtual void handleUpperPacket(Packet *msg) override;
+        const Protocol& getProtocol() const override;
+        virtual void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
 
-private:
-    IArp *arp;
-    IMobility *mobility;
-    int headerLength = 0;
-    cMessage *routingMessage;
-    Coord destPosition;
+    private:
+        IArp *arp;
+        IMobility *mobility;
+        int headerLength = 0;
+        cMessage *message;
+        Coord destPosition;
 
-    L3Address myNetworkAddress;
-    L3Address sinkAddress;
-    MacAddress myMacAddress;
-    bool isConfigured = false;
-    double sinkDistance;
-    neighborsTable_t neighborsTable;
+        Packet *dataMsg;
 
-    enum messagesTypes {
-        ROUTING,
-        DATA
-    };
+        L3Address myNetworkAddress;
+        L3Address sinkAddress;
+        MacAddress myMacAddress;
+        bool isConfigured = false;
+        double sinkDistance;
+        neighborsTable_t neighborsTable;
 
-    IEpEnergyStorage *energyStorage = nullptr;
+        enum messagesTypes {
+            ROUTING,
+            DATA,
+            DATAFORWARD,
+        };
 
-protected:
-public:
+        IEpEnergyStorage *energyStorage = nullptr;
+
+    protected:
+    public:
 };
 
 #endif

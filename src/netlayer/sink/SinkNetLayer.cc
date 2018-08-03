@@ -49,9 +49,6 @@ void SinkNetLayer::handleSelfMessage(cMessage *msg){
         pkt->setNodeEnergy(-1);
         pkt->setNodePosition(mobility->getCurrentPosition());
 
-
-
-
         auto packet = new Packet("Start Flooding", ROUTING);
         packet->insertAtBack(pkt);
         setDownControlInfo(packet, MacAddress::BROADCAST_ADDRESS);
