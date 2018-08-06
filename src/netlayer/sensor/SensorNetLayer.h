@@ -30,9 +30,11 @@
 #include <functional>
 #include <sstream>
 #include <string>
+#include <list>
 
 using namespace inet;
 using namespace power;
+
 using std::map;
 using std::make_pair;
 using std::string;
@@ -40,22 +42,22 @@ using std::function;
 using std::pair;
 using std::set;
 using std::cout;
-
+using std::list;
 
 typedef struct {
-
+        L3Address addr;
         double energy;
         double destinationDistance;
 
-}neighborsData_t;
+}neighbor_t;
 
 class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
 
     private:
         SensorNetLayer(const SensorNetLayer&);
         SensorNetLayer& operator=(const SensorNetLayer&);
-        typedef map<L3Address, neighborsData_t> neighborsTable_t;
         L3Address getDest();
+        void updateNeighbor(L3Address addr, double energy);
     protected:
 
     public:
@@ -81,7 +83,9 @@ class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
         MacAddress myMacAddress;
         bool isConfigured = false;
         double sinkDistance;
-        neighborsTable_t neighborsTable;
+        //neighborsTable_t neighborsTable;
+
+        list<neighbor_t> neighborsTable;
 
         enum messagesTypes {
             ROUTING,

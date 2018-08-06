@@ -25,7 +25,7 @@ module Sensor extends ApplicationLayerNodeBase
         numLoInterfaces = default(0);
         wlan[*].typename = default("AckingWirelessInterface");
         generic.typename = default("SensorNetwork");
-        mobility.typename = default("Grid");
+        mobility.typename = default("Grid"); //StaticGridMobility
         app.typename = default("SensorAppLayer");
                 
         hasUdp = false;

@@ -46,7 +46,7 @@ void SinkNetLayer::handleSelfMessage(cMessage *msg){
         pkt->setDestAddr(myNetwAddr.getAddressType()->getBroadcastAddress());
 
         pkt->setDestPosition(mobility->getCurrentPosition());
-        pkt->setNodeEnergy(-1);
+        pkt->setNodeEnergy(1000000000);
         pkt->setNodePosition(mobility->getCurrentPosition());
 
         auto packet = new Packet("Start Flooding", ROUTING);
