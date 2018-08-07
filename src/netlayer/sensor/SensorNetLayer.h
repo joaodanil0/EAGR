@@ -27,36 +27,28 @@
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/power/contract/IEpEnergyStorage.h"
 
-#include <functional>
-#include <sstream>
-#include <string>
-#include <list>
-
 using namespace inet;
 using namespace power;
 
-using std::map;
+using std::multimap;
 using std::make_pair;
-using std::string;
-using std::function;
 using std::pair;
-using std::set;
 using std::cout;
-using std::list;
 
-typedef struct {
-        L3Address addr;
-        double energy;
-        double destinationDistance;
-
-}neighbor_t;
 
 class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
 
     private:
         SensorNetLayer(const SensorNetLayer&);
         SensorNetLayer& operator=(const SensorNetLayer&);
+        /**
+         * Choose the best neighbor to send the packet
+         */
         L3Address getDest();
+
+        /*
+         * Update the energy on the neighbor table.
+         */
         void updateNeighbor(L3Address addr, double energy);
     protected:
 
@@ -67,25 +59,24 @@ class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
         virtual void handleLowerPacket(Packet *packet) override;
         virtual void handleUpperPacket(Packet *msg) override;
         const Protocol& getProtocol() const override;
-        virtual void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
+        void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
 
     private:
         IArp *arp;
         IMobility *mobility;
         int headerLength = 0;
         cMessage *message;
-        Coord destPosition;
-
         Packet *dataMsg;
 
         L3Address myNetworkAddress;
         L3Address sinkAddress;
-        MacAddress myMacAddress;
-        bool isConfigured = false;
-        double sinkDistance;
-        //neighborsTable_t neighborsTable;
 
-        list<neighbor_t> neighborsTable;
+        bool isConfigured = false;
+        Coord sinkPosition;
+        double sinkDistance;
+
+        IEpEnergyStorage *energyStorage = nullptr;
+        multimap<double, pair<double, L3Address>> neighborsTable;
 
         enum messagesTypes {
             ROUTING,
@@ -93,7 +84,7 @@ class SensorNetLayer : public NetworkProtocolBase, public INetworkProtocol {
             DATAFORWARD,
         };
 
-        IEpEnergyStorage *energyStorage = nullptr;
+
 
     protected:
     public:

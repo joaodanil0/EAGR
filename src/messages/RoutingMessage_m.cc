@@ -234,8 +234,9 @@ void RoutingMessage::copy(const RoutingMessage& other)
 {
     this->srcAddr = other.srcAddr;
     this->destAddr = other.destAddr;
-    this->destPosition = other.destPosition;
-    this->nodePosition = other.nodePosition;
+    this->sensorAddr = other.sensorAddr;
+    this->sinkPosition = other.sinkPosition;
+    this->sinkDistance = other.sinkDistance;
     this->nodeEnergy = other.nodeEnergy;
 }
 
@@ -244,8 +245,9 @@ void RoutingMessage::parsimPack(omnetpp::cCommBuffer *b) const
     ::inet::FieldsChunk::parsimPack(b);
     doParsimPacking(b,this->srcAddr);
     doParsimPacking(b,this->destAddr);
-    doParsimPacking(b,this->destPosition);
-    doParsimPacking(b,this->nodePosition);
+    doParsimPacking(b,this->sensorAddr);
+    doParsimPacking(b,this->sinkPosition);
+    doParsimPacking(b,this->sinkDistance);
     doParsimPacking(b,this->nodeEnergy);
 }
 
@@ -254,8 +256,9 @@ void RoutingMessage::parsimUnpack(omnetpp::cCommBuffer *b)
     ::inet::FieldsChunk::parsimUnpack(b);
     doParsimUnpacking(b,this->srcAddr);
     doParsimUnpacking(b,this->destAddr);
-    doParsimUnpacking(b,this->destPosition);
-    doParsimUnpacking(b,this->nodePosition);
+    doParsimUnpacking(b,this->sensorAddr);
+    doParsimUnpacking(b,this->sinkPosition);
+    doParsimUnpacking(b,this->sinkDistance);
     doParsimUnpacking(b,this->nodeEnergy);
 }
 
@@ -281,26 +284,37 @@ void RoutingMessage::setDestAddr(const L3Address& destAddr)
     this->destAddr = destAddr;
 }
 
-const Coord& RoutingMessage::getDestPosition() const
+const L3Address& RoutingMessage::getSensorAddr() const
 {
-    return this->destPosition;
+    return this->sensorAddr;
 }
 
-void RoutingMessage::setDestPosition(const Coord& destPosition)
+void RoutingMessage::setSensorAddr(const L3Address& sensorAddr)
 {
     handleChange();
-    this->destPosition = destPosition;
+    this->sensorAddr = sensorAddr;
 }
 
-const Coord& RoutingMessage::getNodePosition() const
+const Coord& RoutingMessage::getSinkPosition() const
 {
-    return this->nodePosition;
+    return this->sinkPosition;
 }
 
-void RoutingMessage::setNodePosition(const Coord& nodePosition)
+void RoutingMessage::setSinkPosition(const Coord& sinkPosition)
 {
     handleChange();
-    this->nodePosition = nodePosition;
+    this->sinkPosition = sinkPosition;
+}
+
+double RoutingMessage::getSinkDistance() const
+{
+    return this->sinkDistance;
+}
+
+void RoutingMessage::setSinkDistance(double sinkDistance)
+{
+    handleChange();
+    this->sinkDistance = sinkDistance;
 }
 
 double RoutingMessage::getNodeEnergy() const
@@ -321,8 +335,9 @@ class RoutingMessageDescriptor : public omnetpp::cClassDescriptor
     enum FieldConstants {
         FIELD_srcAddr,
         FIELD_destAddr,
-        FIELD_destPosition,
-        FIELD_nodePosition,
+        FIELD_sensorAddr,
+        FIELD_sinkPosition,
+        FIELD_sinkDistance,
         FIELD_nodeEnergy,
     };
   public:
@@ -386,7 +401,7 @@ const char *RoutingMessageDescriptor::getProperty(const char *propertyname) cons
 int RoutingMessageDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 5+basedesc->getFieldCount() : 5;
+    return basedesc ? 6+basedesc->getFieldCount() : 6;
 }
 
 unsigned int RoutingMessageDescriptor::getFieldTypeFlags(int field) const
@@ -400,11 +415,12 @@ unsigned int RoutingMessageDescriptor::getFieldTypeFlags(int field) const
     static unsigned int fieldTypeFlags[] = {
         0,    // FIELD_srcAddr
         0,    // FIELD_destAddr
-        FD_ISCOMPOUND,    // FIELD_destPosition
-        FD_ISCOMPOUND,    // FIELD_nodePosition
+        0,    // FIELD_sensorAddr
+        FD_ISCOMPOUND,    // FIELD_sinkPosition
+        FD_ISEDITABLE,    // FIELD_sinkDistance
         FD_ISEDITABLE,    // FIELD_nodeEnergy
     };
-    return (field >= 0 && field < 5) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
 }
 
 const char *RoutingMessageDescriptor::getFieldName(int field) const
@@ -418,11 +434,12 @@ const char *RoutingMessageDescriptor::getFieldName(int field) const
     static const char *fieldNames[] = {
         "srcAddr",
         "destAddr",
-        "destPosition",
-        "nodePosition",
+        "sensorAddr",
+        "sinkPosition",
+        "sinkDistance",
         "nodeEnergy",
     };
-    return (field >= 0 && field < 5) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
 }
 
 int RoutingMessageDescriptor::findField(const char *fieldName) const
@@ -431,9 +448,10 @@ int RoutingMessageDescriptor::findField(const char *fieldName) const
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0] == 's' && strcmp(fieldName, "srcAddr") == 0) return base+0;
     if (fieldName[0] == 'd' && strcmp(fieldName, "destAddr") == 0) return base+1;
-    if (fieldName[0] == 'd' && strcmp(fieldName, "destPosition") == 0) return base+2;
-    if (fieldName[0] == 'n' && strcmp(fieldName, "nodePosition") == 0) return base+3;
-    if (fieldName[0] == 'n' && strcmp(fieldName, "nodeEnergy") == 0) return base+4;
+    if (fieldName[0] == 's' && strcmp(fieldName, "sensorAddr") == 0) return base+2;
+    if (fieldName[0] == 's' && strcmp(fieldName, "sinkPosition") == 0) return base+3;
+    if (fieldName[0] == 's' && strcmp(fieldName, "sinkDistance") == 0) return base+4;
+    if (fieldName[0] == 'n' && strcmp(fieldName, "nodeEnergy") == 0) return base+5;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -448,11 +466,12 @@ const char *RoutingMessageDescriptor::getFieldTypeString(int field) const
     static const char *fieldTypeStrings[] = {
         "inet::L3Address",    // FIELD_srcAddr
         "inet::L3Address",    // FIELD_destAddr
-        "inet::Coord",    // FIELD_destPosition
-        "inet::Coord",    // FIELD_nodePosition
+        "inet::L3Address",    // FIELD_sensorAddr
+        "inet::Coord",    // FIELD_sinkPosition
+        "double",    // FIELD_sinkDistance
         "double",    // FIELD_nodeEnergy
     };
-    return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **RoutingMessageDescriptor::getFieldPropertyNames(int field) const
@@ -521,8 +540,9 @@ std::string RoutingMessageDescriptor::getFieldValueAsString(void *object, int fi
     switch (field) {
         case FIELD_srcAddr: return pp->getSrcAddr().str();
         case FIELD_destAddr: return pp->getDestAddr().str();
-        case FIELD_destPosition: {std::stringstream out; out << pp->getDestPosition(); return out.str();}
-        case FIELD_nodePosition: {std::stringstream out; out << pp->getNodePosition(); return out.str();}
+        case FIELD_sensorAddr: return pp->getSensorAddr().str();
+        case FIELD_sinkPosition: {std::stringstream out; out << pp->getSinkPosition(); return out.str();}
+        case FIELD_sinkDistance: return double2string(pp->getSinkDistance());
         case FIELD_nodeEnergy: return double2string(pp->getNodeEnergy());
         default: return "";
     }
@@ -538,6 +558,7 @@ bool RoutingMessageDescriptor::setFieldValueAsString(void *object, int field, in
     }
     RoutingMessage *pp = (RoutingMessage *)object; (void)pp;
     switch (field) {
+        case FIELD_sinkDistance: pp->setSinkDistance(string2double(value)); return true;
         case FIELD_nodeEnergy: pp->setNodeEnergy(string2double(value)); return true;
         default: return false;
     }
@@ -552,8 +573,7 @@ const char *RoutingMessageDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
-        case FIELD_destPosition: return omnetpp::opp_typename(typeid(Coord));
-        case FIELD_nodePosition: return omnetpp::opp_typename(typeid(Coord));
+        case FIELD_sinkPosition: return omnetpp::opp_typename(typeid(Coord));
         default: return nullptr;
     };
 }
@@ -570,8 +590,8 @@ void *RoutingMessageDescriptor::getFieldStructValuePointer(void *object, int fie
     switch (field) {
         case FIELD_srcAddr: return toVoidPtr(&pp->getSrcAddr()); break;
         case FIELD_destAddr: return toVoidPtr(&pp->getDestAddr()); break;
-        case FIELD_destPosition: return toVoidPtr(&pp->getDestPosition()); break;
-        case FIELD_nodePosition: return toVoidPtr(&pp->getNodePosition()); break;
+        case FIELD_sensorAddr: return toVoidPtr(&pp->getSensorAddr()); break;
+        case FIELD_sinkPosition: return toVoidPtr(&pp->getSinkPosition()); break;
         default: return nullptr;
     }
 }

@@ -41,12 +41,13 @@ void SensorNetLayer::handleSelfMessage(cMessage *msg){
         auto pkt = makeShared<RoutingMessage>();
 
         pkt->setChunkLength(B(headerLength));
-        pkt->setDestPosition(destPosition);
-        pkt->setNodePosition(mobility->getCurrentPosition());
-        pkt->setNodeEnergy(energyStorage->getResidualEnergyCapacity().get());
 
         pkt->setSrcAddr(myNetworkAddress);
         pkt->setDestAddr(myNetworkAddress.getAddressType()->getBroadcastAddress());
+
+        pkt->setSinkPosition(sinkPosition);
+        pkt->setSinkDistance(sinkDistance);
+        pkt->setNodeEnergy(energyStorage->getResidualEnergyCapacity().get());
 
         auto packet = new Packet("Forward Flooding", ROUTING);
         packet->insertAtBack(pkt);
@@ -62,22 +63,21 @@ void SensorNetLayer::handleLowerPacket(Packet *packet){
 
     if(packet->getKind() == ROUTING){
         auto netMsg = staticPtrCast<RoutingMessage>(packet->peekAtFront<RoutingMessage>()->dupShared());
-        neighbor_t neighbor;
 
         if(!isConfigured){
             isConfigured = true;
 
-            destPosition = netMsg->getDestPosition();
-
+            sinkPosition = netMsg->getSinkPosition();
+            sinkDistance = mobility->getCurrentPosition().distance(sinkPosition);
             message = new cMessage("Forward Flooding", ROUTING);
             scheduleAt(simTime() + truncnormal(0,0.1), message);
         }
 
-        neighbor.addr = netMsg->getSrcAddr();
-        neighbor.destinationDistance = netMsg->getNodePosition().distance(destPosition);
-        neighbor.energy = netMsg->getNodeEnergy();
+        double sinkDistanceNeighbor = netMsg->getSinkDistance();
+        double neighborEnergy = netMsg->getNodeEnergy();
+        L3Address neighborAddr = netMsg->getSrcAddr();
 
-        neighborsTable.push_back(neighbor);
+        neighborsTable.insert(make_pair(sinkDistanceNeighbor, make_pair(neighborEnergy, neighborAddr)));
 
         delete packet;
     }
@@ -116,8 +116,11 @@ void SensorNetLayer::handleUpperPacket(Packet *msg){
     L3Address neighborsAddr = getDest();
 
     pkt->setChunkLength(B(headerLength));
+
     pkt->setSrcAddr(myNetworkAddress);
     pkt->setDestAddr(neighborsAddr);
+    pkt->setNodeEnergy(energyStorage->getResidualEnergyCapacity().get());
+    pkt->setSensorAddr(myNetworkAddress);
 
     msg->insertAtFront(pkt);
     msg->setKind(DATA);
@@ -143,17 +146,29 @@ const Protocol& SensorNetLayer::getProtocol() const {
 L3Address SensorNetLayer::getDest(){
 
     double energyThreshold = 0.5;
-    double auxDistance = 99999999;
     double auxEnergy = 0;
     L3Address addr;
 
-    //sortMap(&neighborsTable);
 
-    return addr;
+    for(auto it : neighborsTable){
+
+        if((it.first <= sinkDistance) && (it.second.first > auxEnergy) && (it.second.first > energyThreshold)){
+            auxEnergy = it.second.first;
+            addr = it.second.second;
+        }
+    }
+
+
+    return neighborsTable.begin()->second.second;
 }
 
 void SensorNetLayer::updateNeighbor(L3Address addr, double energy){
 
+    for(auto it : neighborsTable){
+
+        if(it.second.second == addr)
+            (*neighborsTable.find(it.first)).second.first = energy;
+    }
 }
 
 

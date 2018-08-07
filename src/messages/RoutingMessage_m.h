@@ -34,16 +34,17 @@ class RoutingMessage;
 namespace inet {
 
 /**
- * Class generated from <tt>src/messages/RoutingMessage.msg:29</tt> by nedtool.
+ * Class generated from <tt>src/messages/RoutingMessage.msg:23</tt> by nedtool.
  * <pre>
  * class RoutingMessage extends FieldsChunk
  * {
  *     L3Address srcAddr;
  *     L3Address destAddr;
  * 
- *     Coord destPosition;
+ *     L3Address sensorAddr;
  * 
- *     Coord nodePosition;
+ *     Coord sinkPosition;
+ *     double sinkDistance;
  *     double nodeEnergy;
  * }
  * </pre>
@@ -53,8 +54,9 @@ class RoutingMessage : public ::inet::FieldsChunk
   protected:
     L3Address srcAddr;
     L3Address destAddr;
-    Coord destPosition;
-    Coord nodePosition;
+    L3Address sensorAddr;
+    Coord sinkPosition;
+    double sinkDistance = 0;
     double nodeEnergy = 0;
 
   private:
@@ -80,12 +82,14 @@ class RoutingMessage : public ::inet::FieldsChunk
     virtual const L3Address& getDestAddr() const;
     virtual L3Address& getDestAddrForUpdate() { handleChange();return const_cast<L3Address&>(const_cast<RoutingMessage*>(this)->getDestAddr());}
     virtual void setDestAddr(const L3Address& destAddr);
-    virtual const Coord& getDestPosition() const;
-    virtual Coord& getDestPositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getDestPosition());}
-    virtual void setDestPosition(const Coord& destPosition);
-    virtual const Coord& getNodePosition() const;
-    virtual Coord& getNodePositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getNodePosition());}
-    virtual void setNodePosition(const Coord& nodePosition);
+    virtual const L3Address& getSensorAddr() const;
+    virtual L3Address& getSensorAddrForUpdate() { handleChange();return const_cast<L3Address&>(const_cast<RoutingMessage*>(this)->getSensorAddr());}
+    virtual void setSensorAddr(const L3Address& sensorAddr);
+    virtual const Coord& getSinkPosition() const;
+    virtual Coord& getSinkPositionForUpdate() { handleChange();return const_cast<Coord&>(const_cast<RoutingMessage*>(this)->getSinkPosition());}
+    virtual void setSinkPosition(const Coord& sinkPosition);
+    virtual double getSinkDistance() const;
+    virtual void setSinkDistance(double sinkDistance);
     virtual double getNodeEnergy() const;
     virtual void setNodeEnergy(double nodeEnergy);
 };

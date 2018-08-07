@@ -42,12 +42,12 @@ void SinkNetLayer::handleSelfMessage(cMessage *msg){
         auto pkt = makeShared<RoutingMessage>();
 
         pkt->setChunkLength(B(headerLength));
+
         pkt->setSrcAddr(myNetwAddr);
         pkt->setDestAddr(myNetwAddr.getAddressType()->getBroadcastAddress());
 
-        pkt->setDestPosition(mobility->getCurrentPosition());
+        pkt->setSinkPosition(mobility->getCurrentPosition());
         pkt->setNodeEnergy(1000000000);
-        pkt->setNodePosition(mobility->getCurrentPosition());
 
         auto packet = new Packet("Start Flooding", ROUTING);
         packet->insertAtBack(pkt);
@@ -62,20 +62,15 @@ void SinkNetLayer::handleSelfMessage(cMessage *msg){
 
 void SinkNetLayer::handleLowerPacket(Packet *msg){
 
-
-
     if(msg->getKind() == ROUTING){
         auto netMsg = staticPtrCast<RoutingMessage>(msg->peekAtFront<RoutingMessage>()->dupShared());
 
-       // cout << "CHEGOU ROTEAMENTO: " << netMsg->getSrcAddr() << endl;
     }
     else if(msg->getKind() == DATA){
         auto netMsg = staticPtrCast<RoutingMessage>(msg->peekAtFront<RoutingMessage>()->dupShared());
 
         if(hasGUI())
-               getParentModule()->getParentModule()->bubble("Chegou dados");
-
-        //cout << "CHEGOU DATA: " << netMsg->getSrcAddr() << endl;
+               getParentModule()->getParentModule()->bubble(netMsg->getSensorAddr().str().c_str());
     }
     delete msg;
 }
